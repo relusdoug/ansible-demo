@@ -218,12 +218,15 @@
 "#cloud-config",
 "",
 "runcmd:",
-"  - sudo yum -y update",
-"  - sudo /usr/bin/pip install --upgrade pip",
-"  - sudo /usr/local/bin/pip install ansible",
-"  - sudo curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash",
-"  - sudo . ~/.nvm/nvm.sh",
-"  - sudo nvm install 6.9.5",
+'  - sudo yum -y update',
+'  - sudo /usr/bin/pip install --upgrade pip',
+'  - sudo /usr/local/bin/pip install ansible',
+'  - sudo yum -y install git',
+'  - sudo curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash',
+'  - sudo export NVM_DIR="/home/ec2-user/.nvm"',
+'  - sudo [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm',
+'  - sudo . ~/.nvm/nvm.sh',
+'  - sudo nvm install 6.9.5',
 "",
 "ssh_authorized_keys:",
 "  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDOEviVpJVWyVyzD1JV/1IE6NVeu1kWp4s9AaVKCQwWFDRh8zZXR06QUZu9VfwlC+EU8MM7ggZhfrYPMlaO4e9D/5Qx8FrPoLcxOMgyVi0uTDIkIwZZkoPHDclmseQgj/9by+ns9kRoT8P2Ne+JjQd8hLK0n3zXmDj6rPXZgdPvi0eFST+PUApF1Q/A4d+H6Ho1555AskKfvsXLwVr3XM5Y0B5N6AMYWFxrKWygK+AG4mIaEp2WHb9CsLQOKEGblpXuv+yPfisR94gDy5mJ+Xp0eEvMuO0aODGqpPnqAbJ0+PkLDS/pXoq/d6OSTKc74GXPCynVukxAg0FITAVE8ECh dougyoon@localhost"
@@ -241,4 +244,4 @@
         }
     }
 }
-    
+
