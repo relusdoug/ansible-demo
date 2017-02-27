@@ -237,10 +237,70 @@
             }
         }
     },
+
     "Outputs": {
-        "ansibleControllerIP": {
+        "outAnsibleIP": {
             "Description": "Ansible Controller can be found here:",
-            "Value": {"Fn::GetAtt": ["ansibleController", "PublicIp"]}
+            "Value": {"Fn::GetAtt": ["ansibleController", "PublicIp"]},
+            "Export": {
+                "Name" : {"Fn::Sub": "${AWS::StackName}-AnsibleControllerIP" }
+            }
+        },
+        "outVPC": {
+            "Description": "Ansible Demo VPC",
+            "Value": { "Ref": "dougCfVpc" },
+            "Export": {
+                "Name" : {"Fn::Sub": "${AWS::StackName}-vpc" }
+            }
+        },
+        "outPublic01": {
+            "Description": "Ansible Demo public subnet 1",
+            "Value": { "Ref": "public01" },
+            "Export": {
+                "Name" : {"Fn::Sub": "${AWS::StackName}-public01" }
+            }
+        },
+        "outPublic02": {
+            "Description": "Ansible Demo public subnet 2",
+            "Value": { "Ref": "public02" },
+            "Export": {
+                "Name" : {"Fn::Sub": "${AWS::StackName}-public02" }
+            }
+        },
+        "outPrivate01": {
+            "Description": "Ansible Demo private subnet 1",
+            "Value": { "Ref": "private01" },
+            "Export": {
+                "Name" : {"Fn::Sub": "${AWS::StackName}-private01" }
+            }
+        },
+        "outPrivate02": {
+            "Description": "Ansible Demo private subnet 2",
+            "Value": { "Ref": "private02" },
+            "Export": {
+                "Name" : {"Fn::Sub": "${AWS::StackName}-private02" }
+            }
+        },
+        "outData01": {
+            "Description": "Ansible Demo custom subnet 1",
+            "Value": { "Ref": "data01" },
+            "Export": {
+                "Name" : {"Fn::Sub": "${AWS::StackName}-data01" }
+            }
+        },
+        "outData02": {
+            "Description": "Ansible Demo custom subnet 2",
+            "Value": { "Ref": "data02" },
+            "Export": {
+                "Name" : {"Fn::Sub": "${AWS::StackName}-data02" }
+            }
+        },
+        "outManagement": {
+            "Description": "Ansible Demo management subnet",
+            "Value": { "Ref": "management" },
+            "Export": {
+                "Name" : {"Fn::Sub": "${AWS::StackName}-management" }
+            }
         }
     }
 }
