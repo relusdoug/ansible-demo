@@ -5,8 +5,14 @@
 
     },
     "Parameters": {
-        "initStackName": "DY-Ansible-Demo",
-        "sqsRole": "arn:aws:iam::515923937946:role/ansibleSQSRole",
+        "initStackName": { 
+            "Type": "String", 
+            "Default": "DY-Ansible-Demo" 
+        },
+        "sqsRole": { 
+            "Type": "String", 
+            "Default": "arn:aws:iam::515923937946:role/ansibleSQSRole" 
+        },
         "InstanceTypeParameters": {
             "Type": "String",
             "Default": "t2.nano",
@@ -102,7 +108,7 @@
                     {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-private02"}}
                 ],
                 "CrossZone" : "true",
-                "LoadBalancerName" : "AnsibleDemoWebELB",
+                "LoadBalancerName" : "AnsibleDemoAppELB",
                 "Listeners" : [ { "InstancePort": "80", "InstanceProtocol": "HTTP", "LoadBalancerPort": "80", "Protocol": "HTTP" }],
                 "Tags": [
                     {"Key":"Name", "Value": "AnsibleDemoAppELB"},
