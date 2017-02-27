@@ -191,6 +191,7 @@
             "Type" : "AWS::AutoScaling::LifecycleHook",
             "Properties" : {
                 "AutoScalingGroupName" : { "Ref": "WebASG" },
+                "HeartbeatTimeout": "300",
                 "LifecycleTransition" : "autoscaling:EC2_INSTANCE_LAUNCHING",
                 "NotificationMetadata" : "AnsibleDemoWebUpASGEvent",
                 "NotificationTargetARN" : { "Fn::GetAtt" : ["DemoSQS", "Arn"]},
@@ -201,6 +202,7 @@
             "Type" : "AWS::AutoScaling::LifecycleHook",
             "Properties" : {
                 "AutoScalingGroupName" : { "Ref": "WebASG" },
+                "HeartbeatTimeout": "300",
                 "LifecycleTransition" : "autoscaling:EC2_INSTANCE_TERMINATING",
                 "NotificationMetadata" : "AnsibleDemoWebDownASGEvent",
                 "NotificationTargetARN" : { "Fn::GetAtt" : ["DemoSQS", "Arn"]},
