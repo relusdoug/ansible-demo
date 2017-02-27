@@ -34,6 +34,9 @@ delStack:
 	aws cloudformation delete-stack --stack-name ${stackName} 
 	rm STATEcomplete
 
+listEvents:
+	aws cloudformation describe-stack-events --stack-name DY-Ansible-Demo-AppStack
+
 statStack:
 	aws cloudformation describe-stack-resources --stack-name ${stackName} 
 

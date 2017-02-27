@@ -168,8 +168,8 @@
                 "MaxSize" : "10",
                 "MinSize" : "2",
                 "Tags": [
-                    {"Key":"Name", "Value": "Ansible Demo Web ASG"},
-                    {"Key":"Team", "Value": "Douglas Yoon"}
+                    {"Key":"Name", "Value": "Ansible Demo Web ASG", "PropagateAtLaunch": "true" },
+                    {"Key":"Team", "Value": "Douglas Yoon", "PropagateAtLaunch": "true" }
                 ]
             }
         },
@@ -187,9 +187,9 @@
                 "LoadBalancerNames" : [{ "Ref": "AppELB" }],
                 "MaxSize" : "10",
                 "MinSize" : "2",
-                "Tags": [
-                    {"Key":"Name", "Value": "Ansible Demo App ASG"},
-                    {"Key":"Team", "Value": "Douglas Yoon"}
+                "Tags": [ 
+                    {"Key":"Name", "Value": "Ansible Demo App ASG", "PropagateAtLaunch": "true" },
+                    {"Key":"Team", "Value": "Douglas Yoon", "PropagateAtLaunch": "true" }
                 ]
             }
         },
