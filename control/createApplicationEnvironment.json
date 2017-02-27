@@ -19,229 +19,141 @@
 
     },
     "Resources": {
-        "dougCfVpc": { 
-            "Type": "AWS::EC2::VPC",
+        "DemoScalingPolicy": {
+            "Type": "AWS::ApplicationAutoScaling::ScalingPolicy",
             "Properties": {
-                "CidrBlock": "10.14.0.0/16",
+                "PolicyName": "AnsibleAppScale,
+                "PolicyType" : String,
+                "ResourceId" : String,
+                "ScalableDimension" : String,
+                "ScalingTargetId" : String,
+                "ServiceNamespace" : String,
+                "StepScalingPolicyConfiguration" : StepScalingPolicyConfiguration
+            }
+        },
+        "WebELB": {
+            "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+            "Properties": {
+                "Subnets" : [ String, ... ],
+                "CrossZone" : "true",
+                "LoadBalancerName" : "AnsibleDemoWebELB",
+                "Listeners" : [ { "InstancePort": "80", "InstanceProtocol": "HTTP", "LoadBalancerPort": "80", "Protocol": "HTTP" }],
                 "Tags": [
-                    {"Key":"Name", "Value":"Doug CF VPC"},
+                    {"Key":"Name", "Value":"AnsibleDemoWebELB"},
                     {"Key":"Team", "Value": "Douglas Yoon"}
                 ]
             }
         },
-        "public01": {
-            "Type": "AWS::EC2::Subnet",
+        "AppELB": {
+            "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
             "Properties": {
-                "AvailabilityZone": "us-east-2a",
-                "CidrBlock": "10.14.128.0/22",
-                "MapPublicIpOnLaunch": true,
-                "VpcId": { "Ref": "dougCfVpc" },
+                "Subnets" : [ String, ... ],
+                "CrossZone" : "true",
+                "LoadBalancerName" : "AnsibleDemoWebELB",
+                "Listeners" : [ { "InstancePort": "80", "InstanceProtocol": "HTTP", "LoadBalancerPort": "80", "Protocol": "HTTP" }],
                 "Tags": [
-                    {"Key":"Name", "Value":"Doug Public Subnet 01"},
-                    {"Key":"Team", "Value": "Douglas Yoon"}
-                ]                
-            }
-        },
-        "public02": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-                "AvailabilityZone": "us-east-2c",
-                "CidrBlock": "10.14.136.0/22",
-                "MapPublicIpOnLaunch": true,
-                "VpcId": { "Ref": "dougCfVpc" },
-                "Tags": [
-                    {"Key":"Name", "Value":"Doug Public Subnet 02"},
-                    {"Key":"Team", "Value": "Douglas Yoon"}
-                ]                
-            }
-        },
-        "private01": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-                "AvailabilityZone": "us-east-2a",
-                "CidrBlock": "10.14.64.0/21",
-                "MapPublicIpOnLaunch": false,
-                "VpcId": { "Ref": "dougCfVpc" },
-                "Tags": [
-                    {"Key":"Name", "Value":"Doug Private Subnet 01"},
-                    {"Key":"Team", "Value": "Douglas Yoon"}
-                ]                
-            }
-        },
-        "private02": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-                "AvailabilityZone": "us-east-2c",
-                "CidrBlock": "10.14.72.0/21",
-                "MapPublicIpOnLaunch": false,
-                "VpcId": { "Ref": "dougCfVpc" },
-                "Tags": [
-                    {"Key":"Name", "Value":"Doug Private Subnet 02"},
-                    {"Key":"Team", "Value": "Douglas Yoon"}
-                ]                
-            }
-        },
-        "data01": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-                "AvailabilityZone": "us-east-2a",
-                "CidrBlock": "10.14.32.0/22",
-                "MapPublicIpOnLaunch": false,
-                "VpcId": { "Ref": "dougCfVpc" },
-                "Tags": [
-                    {"Key":"Name", "Value":"Doug Custom Private Subnet 01"},
-                    {"Key":"Team", "Value": "Douglas Yoon"}
-                ]                
-            }
-        },
-        "data02": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-                "AvailabilityZone": "us-east-2c",
-                "CidrBlock": "10.14.40.0/22",
-                "MapPublicIpOnLaunch": false,
-                "VpcId": { "Ref": "dougCfVpc" },
-                "Tags": [
-                    {"Key":"Name", "Value":"Doug Custom Private Subnet 02"},
-                    {"Key":"Team", "Value": "Douglas Yoon"}
-                ]                
-            }
-        },
-        "management": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-                "AvailabilityZone": "us-east-2c",
-                "CidrBlock": "10.14.224.0/22",
-                "MapPublicIpOnLaunch": true,
-                "VpcId": { "Ref": "dougCfVpc" },
-                "Tags": [
-                    {"Key":"Name", "Value":"Doug management subnet"},
+                    {"Key":"Name", "Value":"AnsibleDemoAppELB"},
                     {"Key":"Team", "Value": "Douglas Yoon"}
                 ]
             }
         },
-        "DYIGW": {
-            "Type": "AWS::EC2::InternetGateway",
-            "Properties": {
-                "Tags": [
-                    {"Key":"Name", "Value":"DYCFDEMO"},
-                    {"Key":"Team", "Value": "Douglas Yoon"}
-                ]
-            }
-        },
-        "DYIGWAttach": {
-            "Type": "AWS::EC2::VPCGatewayAttachment",
-            "Properties": {
-                "InternetGatewayId": { "Ref": "DYIGW" },
-                "VpcId": { "Ref": "dougCfVpc" }
-            }
-        },
-        "DYPublicRouteTable": {
-          "Type": "AWS::EC2::RouteTable",
-          "Properties": {
-            "VpcId": { "Ref": "dougCfVpc" },
-            "Tags": [
-                {"Key":"Name", "Value":"DougPublicRouteTable"},
-                {"Key":"Team", "Value": "Douglas Yoon"}
-            ]
-          }
-        },
-        "DYPublicRoute": {
-            "Type": "AWS::EC2::Route",
-            "Properties": {
-                "RouteTableId": { "Ref": "DYPublicRouteTable" },
-                "DestinationCidrBlock": "0.0.0.0/0",
-                "GatewayId": { "Ref": "DYIGW" }
-            }
-        },        
-        "DYPubic01Assoc": {
-            "Type": "AWS::EC2::SubnetRouteTableAssociation",
-            "Properties": {
-                "RouteTableId": { "Ref": "DYPublicRouteTable" },
-                "SubnetId": { "Ref": "public01" }
-            }
-        },
-        "DYPubic02Assoc": {
-          "Type": "AWS::EC2::SubnetRouteTableAssociation",
-          "Properties": {
-                "RouteTableId": { "Ref": "DYPublicRouteTable" },
-                "SubnetId": { "Ref": "public02" }
-          }
-        },
-        "DYmanagementAssoc": {
-            "Type": "AWS::EC2::SubnetRouteTableAssociation",
-            "Properties": {
-                "RouteTableId": { "Ref": "DYPublicRouteTable" },
-                "SubnetId": { "Ref": "management" }
-            }
-        },
-        "DYsshSecurityGroup": {
+        "DYDemoAppSecurityGroup": {
             "Type":"AWS::EC2::SecurityGroup",
             "Properties": {
-                "GroupDescription": "Doug CF SG fo ssh",
+                "GroupDescription": "Doug CF SG fo http and ssh",
                 "SecurityGroupIngress": [
+                    {"IpProtocol": "tcp", "FromPort": "80", "ToPort": "80", "CidrIp": "0.0.0.0/0"},
                     {"IpProtocol": "tcp", "FromPort": "22", "ToPort": "22", "CidrIp": "0.0.0.0/0"}
                 ],
                 "VpcId": { "Ref": "dougCfVpc" },
                 "Tags": [
-                    {"Key":"Name", "Value":"DougSSHOnly"},
+                    {"Key":"Name", "Value":"DougHTTPandSSH"},
                     {"Key":"Team", "Value": "Douglas Yoon"}
-                ]                
+                ]
             }
         },
-        "ansibleControllerInstanceProfile": {
-            "Type": "AWS::IAM::InstanceProfile",
+        "WebLC": {
+            "Type": "AWS::AutoScaling::LaunchConfiguration",
             "Properties": {
-                "Roles": ["ansibleControllerRole"]
-            }
-        },
-        "ansibleController": {
-            "Type": "AWS::EC2::Instance",
-            "Properties": {
-                "KeyName": "DY-Ohio",
-                "DisableApiTermination": "false",
+                "AssociatePublicIpAddress": false,
+                "EbsOptimized": false,
                 "ImageId": "ami-c55673a0",
                 "InstanceType": { "Ref": "InstanceTypeParameters" },
-                "Monitoring": "false",
-                "IamInstanceProfile" : {"Ref": "ansibleControllerInstanceProfile"},
-                "SecurityGroupIds" : [{ "Ref": "DYsshSecurityGroup" }],
-                "SubnetId": { "Ref": "management"},
-                "Tags": [
-                    { "Key": "Name", "Value": "DY_Ansible_Control" },
-                    { "Key": "Team", "Value": "Douglas Yoon" }
-                ],
-                "UserData": {
-                    "Fn::Base64": {
-                        "Fn::Join": [
-                            "\n",
-                            [
-"#cloud-config",
-"",
-"runcmd:",
-'  - sudo yum -y update',
-'  - sudo /usr/bin/pip install --upgrade pip',
-'  - sudo /usr/local/bin/pip install ansible',
-'  - sudo yum -y install git',
-'  - sudo curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash',
-'  - sudo export NVM_DIR="/home/ec2-user/.nvm"',
-'  - sudo [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm',
-'  - sudo . ~/.nvm/nvm.sh',
-'  - sudo nvm install 6.9.5',
-"",
-"ssh_authorized_keys:",
-"  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDOEviVpJVWyVyzD1JV/1IE6NVeu1kWp4s9AaVKCQwWFDRh8zZXR06QUZu9VfwlC+EU8MM7ggZhfrYPMlaO4e9D/5Qx8FrPoLcxOMgyVi0uTDIkIwZZkoPHDclmseQgj/9by+ns9kRoT8P2Ne+JjQd8hLK0n3zXmDj6rPXZgdPvi0eFST+PUApF1Q/A4d+H6Ho1555AskKfvsXLwVr3XM5Y0B5N6AMYWFxrKWygK+AG4mIaEp2WHb9CsLQOKEGblpXuv+yPfisR94gDy5mJ+Xp0eEvMuO0aODGqpPnqAbJ0+PkLDS/pXoq/d6OSTKc74GXPCynVukxAg0FITAVE8ECh dougyoon@localhost"
-                            ]
-                        ]
-                    }
-                }
+                "KeyName": "DY-Ohio",
+                "SecurityGroups": [{ "Ref": "DYDemoAppSecurityGroup" }]
             }
-        }
+        },
+        "AppLC": {
+            "Type": "AWS::AutoScaling::LaunchConfiguration",
+            "Properties": {
+                "AssociatePublicIpAddress": false,
+                "EbsOptimized": false,
+                "ImageId": "ami-c55673a0",
+                "InstanceType": { "Ref": "InstanceTypeParameters" },
+                "KeyName": "DY-Ohio",
+                "SecurityGroups": [{ "Ref": "DYDemoAppSecurityGroup" }]
+            }
+        },
+        "WebASG: {
+            "Type": "AWS::AutoScaling::AutoScalingGroup",
+            "Properties": {
+                "VPCZoneIdentifier": [ "SubnetID", ... ],
+                "Cooldown": "300",
+                "HealthCheckGracePeriod": "300",
+                "HealthCheckType": "ELB",
+                "LaunchConfigurationName": { "Ref": "WebLC" },
+                "LoadBalancerNames" : [{ "Ref": "WebELB" }],
+                "MaxSize" : "10",
+                "MinSize" : "2",
+                "Tags": [
+                    {"Key":"Name", "Value":"Ansible Demo Web ASG"},
+                    {"Key":"Team", "Value": "Douglas Yoon"}
+                ]
+            }
+        },
+        "AppASG: {
+            "Type": "AWS::AutoScaling::AutoScalingGroup",
+            "Properties": {
+                "VPCZoneIdentifier": [ "SubnetID", ... ],
+                "Cooldown": "300",
+                "HealthCheckGracePeriod": "300",
+                "HealthCheckType": "ELB",
+                "LaunchConfigurationName": { "Ref": "AppLC" },
+                "LoadBalancerNames" : [{ "Ref": "AppELB" }],
+                "MaxSize" : "10",
+                "MinSize" : "2",
+                "Tags": [
+                    {"Key":"Name", "Value":"Ansible Demo App ASG"},
+                    {"Key":"Team", "Value": "Douglas Yoon"}
+                ]
+            }
+        },
+        "WebLCHUp": {
+            "Type" : "AWS::AutoScaling::LifecycleHook",
+            "Properties" : {
+                "AutoScalingGroupName" : String,
+                "DefaultResult" : String,
+                "HeartbeatTimeout" : Integer,
+                "LifecycleTransition" : String,
+                "NotificationMetadata" : String,
+                "NotificationTargetARN" : String,
+                "RoleARN" : String
+            }
+        },
+        "WebLCHDown": {
+            "Type" : "AWS::AutoScaling::LifecycleHook",
+            "Properties" : {
+                "AutoScalingGroupName" : String,
+                "DefaultResult" : String,
+                "HeartbeatTimeout" : Integer,
+                "LifecycleTransition" : String,
+                "NotificationMetadata" : String,
+                "NotificationTargetARN" : String,
+                "RoleARN" : String
+            }
+        },
     },
     "Outputs": {
-        "ansibleControllerIP": {
-            "Description": "Ansible Controller can be found here:",
-            "Value": {"Fn::GetAtt": ["ansibleController", "PublicIp"]}
-        }
     }
 }
 

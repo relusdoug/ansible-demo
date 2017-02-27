@@ -1,7 +1,7 @@
 #  User defined variables 
-stackName := "DY-Ansible-Demo"
+stackName := "DY-Ansible-Demo-AppStack"
 stackS3Bucket := "https://s3.amazonaws.com/relus-doug/"
-stackJSONFile := "createAnsibleEnvironment.json"
+stackJSONFile := "createApplicationEnvironment.json"
 
 # Operational variables
 #  Either create the stack or update the stack, when JSON file is updated
@@ -15,27 +15,21 @@ endif
 # The build rules
 
 STATEcomplete: STATEuploaded
-	aws cloudformation ${stackOperation} --stack-name ${stackName} \
-		--template-url https://s3.amazonaws.com/relus-doug/createAnsibleEnvironment.json \
-    --capabilities CAPABILITY_NAMED_IAM \
+	aws --profile relus_eng_yoon cloudformation ${stackOperation} --stack-name ${stackName} \
+		--template-url https://s3.amazonaws.com/relus-doug/createApplicationEnvironment.json \
 		--tags Key=Team,Value='Douglas Yoon' | tee STATEcomplete
 
-STATEuploaded: createAnsibleEnvironment.json STATEenvCheckedOut
-	aws s3 cp createAnsibleEnvironment.json s3://relus-doug
+STATEuploaded: createApplicationEnvironment.json STATEenvCheckedOut
+	aws --profile relus_eng_yoon s3 cp createApplicationEnvironment.json s3://relus-doug
 	touch STATEuploaded
 
 STATEenvCheckedOut: 
-	aws s3 ls relus-doug
+	aws --profile relus_eng_yoon s3 ls relus-doug
 	touch STATEenvCheckedOut
 
 clean:
 	rm STATEenvCheckedOut STATEuploaded STATEcomplete
 
-checkInstance:
-	aws ec2 describe-instances --filters Name=tag:Name,Values=DY_Ansible_Control
-
 statStack:
-	aws cloudformation describe-stack-resources --stack-name ${stackName} 
+	aws --profile relus_eng_yoon --region us-east-2 cloudformation describe-stack-resources --stack-name ${stackName} 
 
-listStack:
-	aws cloudformation describe-stack-resources --stack-name ${stackName} 
