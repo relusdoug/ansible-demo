@@ -5,6 +5,8 @@
 
     },
     "Parameters": {
+        "initStackName": "DY-Ansible-Demo",
+        "sqsRole": "arn:aws:iam::515923937946:role/ansibleSQSRole",
         "InstanceTypeParameters": {
             "Type": "String",
             "Default": "t2.nano",
@@ -19,27 +21,75 @@
 
     },
     "Resources": {
-        "DemoScalingPolicy": {
-            "Type": "AWS::ApplicationAutoScaling::ScalingPolicy",
+        "DemoSQS": {
+            "Type" : "AWS::SQS::Queue",
+            "Properties" : {
+                "DelaySeconds": "0",
+                "QueueName": "DYAnsibleDemoQueue",
+                "ReceiveMessageWaitTimeSeconds": "20",
+                "VisibilityTimeout": "600"
+            }
+        },
+        "CPUAlarmHigh": {
+            "Type": "AWS::CloudWatch::Alarm",
             "Properties": {
-                "PolicyName": "AnsibleAppScale,
-                "PolicyType" : String,
-                "ResourceId" : String,
-                "ScalableDimension" : String,
-                "ScalingTargetId" : String,
-                "ServiceNamespace" : String,
-                "StepScalingPolicyConfiguration" : StepScalingPolicyConfiguration
+                "AlarmDescription": "Scale-up if CPU > 90% for 10 minutes",
+                "MetricName": "CPUUtilization",
+                "Namespace": "AWS/EC2",
+                "Statistic": "Average",
+                "Period": "300",
+                "EvaluationPeriods": "2",
+                "Threshold": "90",
+                "AlarmActions": [ { "Ref": "DemoScaleUpPolicy" } ],
+                "Dimensions": [{ "Name": "AutoScalingGroupName", "Value": { "Ref": "WebASG" }}],
+                "ComparisonOperator": "GreaterThanThreshold"
+            }
+        },
+        "CPUAlarmLow": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "AlarmDescription": "Scale-down if CPU < 70% for 10 minutes",
+                "MetricName": "CPUUtilization",
+                "Namespace": "AWS/EC2",
+                "Statistic": "Average",
+                "Period": "300",
+                "EvaluationPeriods": "2",
+                "Threshold": "70",
+                "AlarmActions": [ { "Ref": "DemoScaleDownPolicy" } ],
+                "Dimensions": [ { "Name": "AutoScalingGroupName", "Value": { "Ref": "WebASG" }}],
+                "ComparisonOperator": "LessThanThreshold"
+            }
+        },
+        "DemoScaleUpPolicy" : {
+            "Type" : "AWS::AutoScaling::ScalingPolicy",
+            "Properties" : {
+                "AdjustmentType" : "ChangeInCapacity",
+                "AutoScalingGroupName" : { "Ref" : "WebASG" },
+                "Cooldown" : "60",
+                "ScalingAdjustment" : "2"
+            }
+        },
+        "DemoScaleDownPolicy" : {
+            "Type" : "AWS::AutoScaling::ScalingPolicy",
+            "Properties" : {
+                "AdjustmentType" : "ChangeInCapacity",
+                "AutoScalingGroupName" : { "Ref" : "WebASG" },
+                "Cooldown" : "60",
+                "ScalingAdjustment" : "-2"
             }
         },
         "WebELB": {
             "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
             "Properties": {
-                "Subnets" : [ String, ... ],
+                "Subnets" : [ 
+                    {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-public01"}}, 
+                    {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-public02"}}
+                ],
                 "CrossZone" : "true",
                 "LoadBalancerName" : "AnsibleDemoWebELB",
                 "Listeners" : [ { "InstancePort": "80", "InstanceProtocol": "HTTP", "LoadBalancerPort": "80", "Protocol": "HTTP" }],
                 "Tags": [
-                    {"Key":"Name", "Value":"AnsibleDemoWebELB"},
+                    {"Key":"Name", "Value": "AnsibleDemoWebELB"},
                     {"Key":"Team", "Value": "Douglas Yoon"}
                 ]
             }
@@ -47,12 +97,15 @@
         "AppELB": {
             "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
             "Properties": {
-                "Subnets" : [ String, ... ],
+                "Subnets" : [ 
+                    {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-private01"}}, 
+                    {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-private02"}}
+                ],
                 "CrossZone" : "true",
                 "LoadBalancerName" : "AnsibleDemoWebELB",
                 "Listeners" : [ { "InstancePort": "80", "InstanceProtocol": "HTTP", "LoadBalancerPort": "80", "Protocol": "HTTP" }],
                 "Tags": [
-                    {"Key":"Name", "Value":"AnsibleDemoAppELB"},
+                    {"Key":"Name", "Value": "AnsibleDemoAppELB"},
                     {"Key":"Team", "Value": "Douglas Yoon"}
                 ]
             }
@@ -65,9 +118,9 @@
                     {"IpProtocol": "tcp", "FromPort": "80", "ToPort": "80", "CidrIp": "0.0.0.0/0"},
                     {"IpProtocol": "tcp", "FromPort": "22", "ToPort": "22", "CidrIp": "0.0.0.0/0"}
                 ],
-                "VpcId": { "Ref": "dougCfVpc" },
+                "VpcId": {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-vpc"}}, 
                 "Tags": [
-                    {"Key":"Name", "Value":"DougHTTPandSSH"},
+                    {"Key":"Name", "Value": "DougHTTPandSSH"},
                     {"Key":"Team", "Value": "Douglas Yoon"}
                 ]
             }
@@ -94,10 +147,13 @@
                 "SecurityGroups": [{ "Ref": "DYDemoAppSecurityGroup" }]
             }
         },
-        "WebASG: {
+        "WebASG": {
             "Type": "AWS::AutoScaling::AutoScalingGroup",
             "Properties": {
-                "VPCZoneIdentifier": [ "SubnetID", ... ],
+                "VPCZoneIdentifier": [
+                    {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-public01"}}, 
+                    {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-public02"}}
+                ],
                 "Cooldown": "300",
                 "HealthCheckGracePeriod": "300",
                 "HealthCheckType": "ELB",
@@ -106,15 +162,18 @@
                 "MaxSize" : "10",
                 "MinSize" : "2",
                 "Tags": [
-                    {"Key":"Name", "Value":"Ansible Demo Web ASG"},
+                    {"Key":"Name", "Value": "Ansible Demo Web ASG"},
                     {"Key":"Team", "Value": "Douglas Yoon"}
                 ]
             }
         },
-        "AppASG: {
+        "AppASG": {
             "Type": "AWS::AutoScaling::AutoScalingGroup",
             "Properties": {
-                "VPCZoneIdentifier": [ "SubnetID", ... ],
+                "VPCZoneIdentifier": [
+                    {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-private01"}}, 
+                    {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-private02"}}
+                ],
                 "Cooldown": "300",
                 "HealthCheckGracePeriod": "300",
                 "HealthCheckType": "ELB",
@@ -123,7 +182,7 @@
                 "MaxSize" : "10",
                 "MinSize" : "2",
                 "Tags": [
-                    {"Key":"Name", "Value":"Ansible Demo App ASG"},
+                    {"Key":"Name", "Value": "Ansible Demo App ASG"},
                     {"Key":"Team", "Value": "Douglas Yoon"}
                 ]
             }
@@ -131,27 +190,23 @@
         "WebLCHUp": {
             "Type" : "AWS::AutoScaling::LifecycleHook",
             "Properties" : {
-                "AutoScalingGroupName" : String,
-                "DefaultResult" : String,
-                "HeartbeatTimeout" : Integer,
-                "LifecycleTransition" : String,
-                "NotificationMetadata" : String,
-                "NotificationTargetARN" : String,
-                "RoleARN" : String
+                "AutoScalingGroupName" : { "Ref": "WebASG" },
+                "LifecycleTransition" : "autoscaling:EC2_INSTANCE_LAUNCHING",
+                "NotificationMetadata" : "AnsibleDemoWebUpASGEvent",
+                "NotificationTargetARN" : { "Fn::GetAtt" : ["DemoSQS", "Arn"]},
+                "RoleARN" : { "Ref": "sqsRole" }
             }
         },
         "WebLCHDown": {
             "Type" : "AWS::AutoScaling::LifecycleHook",
             "Properties" : {
-                "AutoScalingGroupName" : String,
-                "DefaultResult" : String,
-                "HeartbeatTimeout" : Integer,
-                "LifecycleTransition" : String,
-                "NotificationMetadata" : String,
-                "NotificationTargetARN" : String,
-                "RoleARN" : String
+                "AutoScalingGroupName" : { "Ref": "WebASG" },
+                "LifecycleTransition" : "autoscaling:EC2_INSTANCE_TERMINATING",
+                "NotificationMetadata" : "AnsibleDemoWebDownASGEvent",
+                "NotificationTargetARN" : { "Fn::GetAtt" : ["DemoSQS", "Arn"]},
+                "RoleARN" : { "Ref": "sqsRole" }
             }
-        },
+        }
     },
     "Outputs": {
     }
