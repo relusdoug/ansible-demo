@@ -40,3 +40,7 @@ listEvents:
 statStack:
 	aws cloudformation describe-stack-resources --stack-name ${stackName} 
 
+## need to kick off node.js 
+## to retrieve SQS queue URL, either 
+## aws cloudformation list-exports
+## aws sqs list-queues

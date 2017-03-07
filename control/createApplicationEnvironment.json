@@ -221,7 +221,7 @@
             "Description": "Ansible Demo SQS URL",
             "Value": { "Ref": "DemoSQS" },
             "Export": {
-                "Name" : {"Ref": "DemoSQS" }
+                "Name" : {"Fn::Sub": "${AWS::StackName}-sqsURL" }
             }
         }
     }

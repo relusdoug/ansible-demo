@@ -39,7 +39,7 @@
  *  receiveMessage() -> processMessage() -> deleteMessage() REPEAT
  */
 var AWS = require("aws-sdk"); 
-var sqs = new AWS.SQS();
+var sqs = new AWS.SQS({region:"us-east-2"});
 var exec = require("child_process").exec;
 
 var adQueueURL = '';
@@ -55,13 +55,14 @@ function receiveMessage() {
     if (err) { 
       console.error(err, err.stack); 
     } else { 
-      if (data != null) {
+      console.log(data);
+
+      if (!(typeof data.Messages === "undefined")) {
         adMsgReceiptHandle = data.Messages[0].ReceiptHandle;
         processMessage()
-        console.log(data);
       } else {
+        console.log (new Date());
         receiveMessage();
-        console.log("data points to null");
       }
     } 
   }); 
@@ -71,6 +72,9 @@ function receiveMessage() {
 /* put/delete instance ip in ansible inventory */
 /* if new instance, run playbook */
 function processMessage() {
+  cmd1 = "ls";
+  cmd2 = "ls";
+  cmd3 = "ls";
   exec(cmd1, function(error, stdout, stderr) {
     exec(cmd2, function(error, stdout, stderr) {
       exec(cmd3, function(error, stdout, stderr) {
