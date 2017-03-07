@@ -217,6 +217,13 @@
         }
     },
     "Outputs": {
+        "outSQSURL": {
+            "Description": "Ansible Demo SQS URL",
+            "Value": { "Ref": "DemoSQS" },
+            "Export": {
+                "Name" : {"Ref": "DemoSQS" }
+            }
+        }
     }
 }
 
