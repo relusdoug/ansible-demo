@@ -34,31 +34,16 @@
 // https://github.com/cmawhorter/sqs-lambda-queue-processor/tree/master/scripts 
 // http://ashiina.github.io/2015/01/lambda-data-fetching/ 
 
+/* 
+ *  Call flow:
+ *  receiveMessage() -> processMessage() -> deleteMessage() REPEAT
+ */
 var AWS = require("aws-sdk"); 
 var sqs = new AWS.SQS();
+var exec = require("child_process").exec;
 
 var adQueueURL = '';
-var adState = 0; /* polling state */
 var adMsgReceiptHandle = '';
-
-function processingStateMachine() {
-  switch (adState) {
-    case 0: /* polling */
-      receiveMessage();
-      adState = 1;
-      break;
-    case 1: /* received, processing */
-      if (adMsgReceiptHandle.length) {
-        adState = 2;
-      } else {
-        adState = 0;
-      }
-      break;
-    case 2: /* processing done, deleting */
-      adState = 0;
-      break;
-  }
-}
 
 function receiveMessage() { 
   var params = { 
@@ -72,22 +57,38 @@ function receiveMessage() {
     } else { 
       if (data != null) {
         adMsgReceiptHandle = data.Messages[0].ReceiptHandle;
+        processMessage()
         console.log(data);
       } else {
-        console.log("data points to null);
+        receiveMessage();
+        console.log("data points to null");
       }
     } 
   }); 
 } 
 
-function deleteMessage(task, callback) {
+/* get instance ip */
+/* put/delete instance ip in ansible inventory */
+/* if new instance, run playbook */
+function processMessage() {
+  exec(cmd1, function(error, stdout, stderr) {
+    exec(cmd2, function(error, stdout, stderr) {
+      exec(cmd3, function(error, stdout, stderr) {
+        deleteMessage();
+      });
+    });
+  });
+}
+
+function deleteMessage() {
   var params = { 
     QueueUrl: adQueueURL, 
-    ReceiptHandle: "AQEBRXTo...q2doVA==" 
+    ReceiptHandle: adMsgReceiptHandle
   }; 
   sqs.deleteMessage(params, function(err, data) { 
-    if (err) console.log(err, err.stack); // an error occurred 
-    else     console.log(data);           // successful response 
+    if (err) { console.log(err, err.stack); } 
+    else { console.log("delete succeeded", data); }
+    receiveMessage();
   }); 
 } 
 
@@ -96,12 +97,12 @@ function deleteMessage(task, callback) {
  * ******************************/
 if (process.argv.length < 3) {
   console.log("Must pass in the SQS Queue URL");
-  console.log("  for example:", argv[0], argv[1], "https://queue.amazonaws.com/80398EXAMPLE/MyQueue");
+  console.log("  for example:", process.argv[0], process.argv[1], "https://queue.amazonaws.com/80398EXAMPLE/MyQueue");
 } else {
   adQueueURL = process.argv[2];
   if (adQueueURL.startsWith("https")) {
     /* start processing messages */
-    processingStateMachine();
+    receiveMessage();
   } else {
     console.log("Must pass in the SQS Queue URL");
     console.log("  for example:", argv[0], argv[1], "https://queue.amazonaws.com/80398EXAMPLE/MyQueue");
