@@ -40,10 +40,15 @@
  */
 var AWS = require("aws-sdk"); 
 var sqs = new AWS.SQS({region:"us-east-2"});
+var autoscaling = new AWS.AutoScaling({region:"us-east-2"});
 var exec = require("child_process").exec;
 
 var adQueueURL = '';
 var adMsgReceiptHandle = '';
+var adASGName = '';
+var adLCHookName = '';
+var adLCToken = '';
+var adLCTransition = '';
 
 function receiveMessage() { 
   var params = { 
@@ -58,8 +63,7 @@ function receiveMessage() {
       console.log(data);
 
       if (!(typeof data.Messages === "undefined")) {
-        adMsgReceiptHandle = data.Messages[0].ReceiptHandle;
-        processMessage()
+        processMessage(data)
       } else {
         console.log (new Date());
         receiveMessage();
@@ -71,16 +75,44 @@ function receiveMessage() {
 /* get instance ip */
 /* put/delete instance ip in ansible inventory */
 /* if new instance, run playbook */
-function processMessage() {
-  cmd1 = "ls";
-  cmd2 = "ls";
-  cmd3 = "ls";
+function processMessage(data) {
+  let adMsgBody = JSON.parse(data.Messages[0].Body);
+  adMsgReceiptHandle = data.Messages[0].ReceiptHandle;
+  adASGName = adMsgBody.AutoScalingGroupName;
+  adLCHookName = adMsgBody.LifecycleHookName;
+  adLCToken = adMsgBody.LifecycleActionToken;
+  adLCTransition = adMsgBody.LifecycleTransition;
+/* "LifecycleTransition":"autoscaling:EC2_INSTANCE_LAUNCHING" */
+/* "LifecycleTransition":"autoscaling:EC2_INSTANCE_TERMINATING" */
+/* "EC2InstanceId":"i-0442019d345f62f14" */
+/* "NotificationMetadata":"AnsibleDemoWebDownASGEvent" */
+
+  let cmd1 = "ls";
+  let cmd2 = "ls";
+  let cmd3 = "ls";
   exec(cmd1, function(error, stdout, stderr) {
     exec(cmd2, function(error, stdout, stderr) {
       exec(cmd3, function(error, stdout, stderr) {
+        completeLifecycle();
         deleteMessage();
       });
     });
+  });
+}
+
+function completeLifecycle() {
+  var params = {
+    AutoScalingGroupName: adASGName,
+    LifecycleHookName:    adLCHookName,
+    LifecycleActionToken: adLCToken,
+    LifecycleActionResult: "CONTINUE" 
+  };
+
+console.log("parameters sent to lifecycle event handler", params);
+
+  autoscaling.completeLifecycleAction(params, function(err, data) {
+    if (err) console.log("lifecycle error:", err, err.stack);    // an error occurred
+    else     console.log("lifecycle complete:", data);           // successful response
   });
 }
 
@@ -109,7 +141,7 @@ if (process.argv.length < 3) {
     receiveMessage();
   } else {
     console.log("Must pass in the SQS Queue URL");
-    console.log("  for example:", argv[0], argv[1], "https://queue.amazonaws.com/80398EXAMPLE/MyQueue");
+    console.log("  for example:", process.argv[0], process.argv[1], "https://queue.amazonaws.com/80398EXAMPLE/MyQueue");
   }
 }
 
