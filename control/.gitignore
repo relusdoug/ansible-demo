@@ -1,3 +1,4 @@
 STATE*
 pig*
+*.retry
 node_modules

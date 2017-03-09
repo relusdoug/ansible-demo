@@ -1,0 +1,22 @@
+---
+- hosts: webservers appservers
+  become: true
+  become_user: root
+  become_method: sudo
+  tasks: 
+    - name: update system
+      yum:
+        name: '*'
+        state: latest
+
+    - name: install httpd 
+      yum: 
+        name: httpd
+        state: latest
+
+    - name: kick off httpd
+      service:
+        name: httpd
+        enabled: yes
+        state: started
+
