@@ -1,4 +1,3 @@
 [webservers]
-i-0ccebd6242c553d06 ansible_host=10.14.66.183 ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/DY-Ohio.pem
 
 [appservers]
