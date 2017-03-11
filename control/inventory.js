@@ -1,6 +1,9 @@
 /*
  * Function to process SQS messages from Auto Scaling Events
  */
+// Style Notes:
+//   - error process usually first
+//   - program flow embedded in cbCallFlow
 
 // [webservers]
 // i-0ccebd6242c553d06 ansible_host=10.14.66.183 ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/DY-Ohio.pem
@@ -50,6 +53,95 @@ var adLCTransition = '';
 var adLCMetaData = '';
 var adEC2Info = {};
 
+var adCBID = [];
+adCBID[receiveMessage]=1;
+
+/* ******************************
+ * callback call flow
+ * ******************************/
+function cbCallFlow(err, data, from) {
+
+  // OK - print error 
+  if (err) { console.log(err, err.stack); } 
+
+  // ****************************
+  if (from == receiveMessage) {
+    if (err) { 
+      receiveMessage(); 
+    } else {
+      if (typeof data.Messages === "undefined") { 
+        receiveMessage(); 
+      } else { 
+        let adMsgBody = JSON.parse(data.Messages[0].Body);
+        adMsgReceiptHandle = data.Messages[0].ReceiptHandle;
+        adASGName = adMsgBody.AutoScalingGroupName;
+        adLCHookName = adMsgBody.LifecycleHookName;
+        adLCToken = adMsgBody.LifecycleActionToken;
+        adLCTransition = adMsgBody.LifecycleTransition;
+        adLCMetaData = adMsgBody.NotificationMetadata;
+
+        getEC2IPAddress(adMsgBody.EC2InstanceId);
+      }
+    }
+  }
+
+  // ****************************
+  if (from == getEC2IPAddress) {
+    if (data == null) { 
+      adEC2Info = null;
+      completeLifecycle("ABANDON");
+      deleteMessage();
+    } else { 
+      adEC2Info = data.Reservations[0].Instances[0]; 
+
+/* "LifecycleTransition":"autoscaling:EC2_INSTANCE_LAUNCHING" */
+/* "LifecycleTransition":"autoscaling:EC2_INSTANCE_TERMINATING" */
+/* "NotificationMetadata":"AnsibleDemoWebDownASGEvent" */
+// if lifecycle transition is to terminate,
+// just delete from inventory
+//      inventoryDeleteInstance()
+
+      inventoryAddInstance();
+    }
+  }
+
+  // ****************************
+  if (from == inventoryDeleteInstance) {
+    completeLifecycle("CONTINUE");
+    deleteMessage();
+  }
+
+  // ****************************
+  if (from == inventoryAddInstance) {
+    if (err) {
+      completeLifecycle("ABANDON");
+      deleteMessage();
+    } else {
+      runPlayBook();
+    }
+  }
+
+  // ****************************
+  if (from == runPlayBook) {
+    if (err) {
+      completeLifecycle("ABANDON");
+    } else {
+      completeLifecycle("CONTINUE");
+    }
+    deleteMessage();
+  }
+
+  // ****************************
+  if (from == completeLifecycle) { 
+    // do nothing
+  }
+
+  // ****************************
+  if (from == deleteMessage) { 
+    receiveMessage(); 
+  }
+}
+
 /* ******************************
  * grab a message off sqs queue
  * ******************************/
@@ -91,48 +183,8 @@ function deleteMessage() {
   }); 
 } 
 
-/* ******************************
- * get instance ip 
- * put/delete instance ip in ansible inventory
- * if new instance, run playbook
- * ******************************/
-function startProcessingMessage(data) {
-  let adMsgBody = JSON.parse(data.Messages[0].Body);
-  adMsgReceiptHandle = data.Messages[0].ReceiptHandle;
-  adASGName = adMsgBody.AutoScalingGroupName;
-  adLCHookName = adMsgBody.LifecycleHookName;
-  adLCToken = adMsgBody.LifecycleActionToken;
-  adLCTransition = adMsgBody.LifecycleTransition;
-  adLCMetaData = adMsgBody.NotificationMetadata;
-
-/* ugh - gotta go back to AWS to get the IP address and keypair */
-  getEC2IPAddress(adMsgBody.EC2InstanceId);
+function runPlayBook() {
 }
-
-/* "LifecycleTransition":"autoscaling:EC2_INSTANCE_LAUNCHING" */
-/* "LifecycleTransition":"autoscaling:EC2_INSTANCE_TERMINATING" */
-/* "NotificationMetadata":"AnsibleDemoWebDownASGEvent" */
-/* ******************************
- *
- * ******************************/
-function continueProcessingMessage() {
-  if (adEC2Info == null) {
-    completeLifecycle("ABANDON");
-    deleteMessage();
-  } else {
-    addInstanceToInventory();
-/* run playbook */
-    let cmd1 = "ls";
-    exec(cmd1, function(error, stdout, stderr) {
-      completeLifecycle("CONTINUE");
-      deleteMessage();
-    });
-  }
-}
-
-/* ================================================= 
- * Utility functions
- * ================================================= */
 
 /* ******************************
  * ask AWS from more info on the
@@ -152,7 +204,6 @@ function getEC2IPAddress(instanceID) {
       console.log(data);           // successful response
       adEC2Info = data.Reservations[0].Instances[0];
     }
-    continueProcessingMessage();
   });
 
 //data.Reservations[0].Instances[0].PrivateIpAddress 
