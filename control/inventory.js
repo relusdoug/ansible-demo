@@ -1,48 +1,26 @@
 /*
  * Function to process SQS messages from Auto Scaling Events
+ *
+ *  General Call flow:
+ *  receiveMessage() -> processMessage() -> complete Lifecycle hook -> deleteMessage() REPEAT
+ *
+ * Style Notes:
+ *   - error process usually first
+ *   - program flow embedded in cbCallFlow
  */
-// Style Notes:
-//   - error process usually first
-//   - program flow embedded in cbCallFlow
-
-// [webservers]
-// i-0ccebd6242c553d06 ansible_host=10.14.66.183 ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/DY-Ohio.pem
-//
-// [appservers]
-// i-0ccebd6242c553d06 ansible_host=10.14.66.183 ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/DY-Ohio.pem
-//
-// {File:[{SectionName:"webservers", Items:[{instances}]}]}
-// INI File is an array of Section Objects
-//   Sections have a SectionName
-//   Sections have an array of Items
-//    Items have an InstanceID
-//    Items have an IP
-//    Items have a Key-Pair name
-//
-// File[];
-// File[0].SectionName
-// File[0].Items[]
-// File[0].Items[0].InstanceID
-// File[0].Items[0].IP
-// File[0].Items[0].KeyPair
-//
-// name=value
-// [section]
-// a=a
-// b=b
-
-// https://github.com/cmawhorter/sqs-lambda-queue-processor/tree/master/scripts 
-// http://ashiina.github.io/2015/01/lambda-data-fetching/ 
 
 /* 
- *  Call flow:
- *  receiveMessage() -> processMessage() -> complete Lifecycle hook -> deleteMessage() REPEAT
+ * other modules
  */
 var AWS = require("aws-sdk"); 
+var exec = require("child_process").exec;
+
+/*
+ * Global Variables
+ */
 var sqs = new AWS.SQS({region:"us-east-2"});
 var ec2 = new AWS.EC2({region:"us-east-2"});
 var autoscaling = new AWS.AutoScaling({region:"us-east-2"});
-var exec = require("child_process").exec;
 
 var adQueueURL = '';
 var adMsgReceiptHandle = '';
@@ -55,6 +33,12 @@ var adEC2Info = {};
 
 var adCBID = [];
 adCBID[receiveMessage]=1;
+adCBID[deleteMessage]=2;
+adCBID[runPlayBook]=3;
+adCBID[getEC2IPAddress]=4;
+adCBID[inventoryAddInstance ]=5;
+adCBID[inventoryDeleteInstance ]=6;
+adCBID[completeLifecycle]=7;
 
 /* ******************************
  * callback call flow
@@ -62,83 +46,84 @@ adCBID[receiveMessage]=1;
 function cbCallFlow(err, data, from) {
 
   // OK - print error 
-  if (err) { console.log(err, err.stack); } 
+  if (err) { console.log(from, err, err.stack); } 
 
-  // ****************************
-  if (from == receiveMessage) {
-    if (err) { 
-      receiveMessage(); 
-    } else {
-      if (typeof data.Messages === "undefined") { 
+  switch (adCBID[from]) {
+    case adCBID[receiveMessage]:
+      if (err) { 
         receiveMessage(); 
-      } else { 
-        let adMsgBody = JSON.parse(data.Messages[0].Body);
-        adMsgReceiptHandle = data.Messages[0].ReceiptHandle;
-        adASGName = adMsgBody.AutoScalingGroupName;
-        adLCHookName = adMsgBody.LifecycleHookName;
-        adLCToken = adMsgBody.LifecycleActionToken;
-        adLCTransition = adMsgBody.LifecycleTransition;
-        adLCMetaData = adMsgBody.NotificationMetadata;
+      } else {
+        if (typeof data.Messages === "undefined") { 
+          receiveMessage(); 
+        } else { 
+          let adMsgBody = JSON.parse(data.Messages[0].Body);
+          adMsgReceiptHandle = data.Messages[0].ReceiptHandle;
+          adASGName = adMsgBody.AutoScalingGroupName;
+          adLCHookName = adMsgBody.LifecycleHookName;
+          adLCToken = adMsgBody.LifecycleActionToken;
+          adLCTransition = adMsgBody.LifecycleTransition;
+          adLCMetaData = adMsgBody.NotificationMetadata;
 
-        getEC2IPAddress(adMsgBody.EC2InstanceId);
+          getEC2IPAddress(adMsgBody.EC2InstanceId);
+        }
       }
-    }
-  }
+      break;
 
-  // ****************************
-  if (from == getEC2IPAddress) {
-    if (data == null) { 
-      adEC2Info = null;
-      completeLifecycle("ABANDON");
-      deleteMessage();
-    } else { 
-      adEC2Info = data.Reservations[0].Instances[0]; 
+    case adCBID[getEC2IPAddress]:
+      if (data == null) { 
+        adEC2Info = null;
+        completeLifecycle("ABANDON");
+        deleteMessage();
+      } else { 
+        adEC2Info = data.Reservations[0].Instances[0]; 
 
 /* "LifecycleTransition":"autoscaling:EC2_INSTANCE_LAUNCHING" */
 /* "LifecycleTransition":"autoscaling:EC2_INSTANCE_TERMINATING" */
 /* "NotificationMetadata":"AnsibleDemoWebDownASGEvent" */
-// if lifecycle transition is to terminate,
-// just delete from inventory
-//      inventoryDeleteInstance()
 
-      inventoryAddInstance();
-    }
-  }
+        if (adLCTransition  == "autoscaling:EC2_INSTANCE_TERMINATING") {
+          inventoryDeleteInstance()
+        } else {
+          inventoryAddInstance();
+        }
+      }
+      break;
 
-  // ****************************
-  if (from == inventoryDeleteInstance) {
-    completeLifecycle("CONTINUE");
-    deleteMessage();
-  }
+    case adCBID[inventoryDeleteInstance ]:
+        completeLifecycle("CONTINUE");
+        deleteMessage();
+      break;
 
-  // ****************************
-  if (from == inventoryAddInstance) {
-    if (err) {
-      completeLifecycle("ABANDON");
+    case adCBID[inventoryAddInstance ]:
+        if (err) {
+          completeLifecycle("ABANDON");
+          deleteMessage();
+        } else {
+          runPlayBook();
+        }
+      break;
+
+    case adCBID[runPlayBook]:
+      if (err) {
+        completeLifecycle("ABANDON");
+      } else {
+        completeLifecycle("CONTINUE");
+      }
       deleteMessage();
-    } else {
-      runPlayBook();
-    }
-  }
+      break;
 
-  // ****************************
-  if (from == runPlayBook) {
-    if (err) {
-      completeLifecycle("ABANDON");
-    } else {
-      completeLifecycle("CONTINUE");
-    }
-    deleteMessage();
-  }
+    case adCBID[completeLifecycle]:
+      // do nothing
+      break;
 
-  // ****************************
-  if (from == completeLifecycle) { 
-    // do nothing
-  }
+    case adCBID[deleteMessage]:
+      /* does not matter if deleting SQS message worked, just listen for more msgs */
+      receiveMessage(); 
+      break;
 
-  // ****************************
-  if (from == deleteMessage) { 
-    receiveMessage(); 
+    default: 
+      receiveMessage(); 
+      break;
   }
 }
 
