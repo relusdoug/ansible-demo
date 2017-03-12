@@ -1,5 +1,5 @@
 ---
-- hosts: webservers
+- hosts: appservers
   become: true
   become_user: root
   become_method: sudo
@@ -21,5 +21,5 @@
         state: started
 
     - name: debug line
-      command: touch /root/web_script.debug
+      command: touch /root/app_script.debug
 

@@ -173,6 +173,28 @@
                 ]
             }
         },
+        "WebLCHUp": {
+            "Type" : "AWS::AutoScaling::LifecycleHook",
+            "Properties" : {
+                "AutoScalingGroupName" : { "Ref": "WebASG" },
+                "HeartbeatTimeout": "300",
+                "LifecycleTransition" : "autoscaling:EC2_INSTANCE_LAUNCHING",
+                "NotificationMetadata" : "AnsibleDemoWebUpASGEvent",
+                "NotificationTargetARN" : { "Fn::GetAtt" : ["DemoSQS", "Arn"]},
+                "RoleARN" : { "Ref": "sqsRole" }
+            }
+        },
+        "WebLCHDown": {
+            "Type" : "AWS::AutoScaling::LifecycleHook",
+            "Properties" : {
+                "AutoScalingGroupName" : { "Ref": "WebASG" },
+                "HeartbeatTimeout": "300",
+                "LifecycleTransition" : "autoscaling:EC2_INSTANCE_TERMINATING",
+                "NotificationMetadata" : "AnsibleDemoWebDownASGEvent",
+                "NotificationTargetARN" : { "Fn::GetAtt" : ["DemoSQS", "Arn"]},
+                "RoleARN" : { "Ref": "sqsRole" }
+            }
+        },
         "AppASG": {
             "Type": "AWS::AutoScaling::AutoScalingGroup",
             "Properties": {
@@ -193,24 +215,24 @@
                 ]
             }
         },
-        "WebLCHUp": {
+        "AppLCHUp": {
             "Type" : "AWS::AutoScaling::LifecycleHook",
             "Properties" : {
-                "AutoScalingGroupName" : { "Ref": "WebASG" },
+                "AutoScalingGroupName" : { "Ref": "AppASG" },
                 "HeartbeatTimeout": "300",
                 "LifecycleTransition" : "autoscaling:EC2_INSTANCE_LAUNCHING",
-                "NotificationMetadata" : "AnsibleDemoWebUpASGEvent",
+                "NotificationMetadata" : "AnsibleDemoAppUpASGEvent",
                 "NotificationTargetARN" : { "Fn::GetAtt" : ["DemoSQS", "Arn"]},
                 "RoleARN" : { "Ref": "sqsRole" }
             }
         },
-        "WebLCHDown": {
+        "AppLCHDown": {
             "Type" : "AWS::AutoScaling::LifecycleHook",
             "Properties" : {
-                "AutoScalingGroupName" : { "Ref": "WebASG" },
+                "AutoScalingGroupName" : { "Ref": "AppASG" },
                 "HeartbeatTimeout": "300",
                 "LifecycleTransition" : "autoscaling:EC2_INSTANCE_TERMINATING",
-                "NotificationMetadata" : "AnsibleDemoWebDownASGEvent",
+                "NotificationMetadata" : "AnsibleDemoAppDownASGEvent",
                 "NotificationTargetARN" : { "Fn::GetAtt" : ["DemoSQS", "Arn"]},
                 "RoleARN" : { "Ref": "sqsRole" }
             }

@@ -153,8 +153,13 @@ function deleteMessage() {
   sqs.deleteMessage(params, function(err, data) { cbCallFlow(err, data, deleteMessage); }); 
 } 
 
+/* ******************************
+ * run the right playbook
+ * for the instance that scaled
+ * ******************************/
 function runPlayBook() {
-// "NotificationMetadata":"AnsibleDemoWebDownASGEvent" 
+// "NotificationMetadata":"AnsibleDemoWebUpASGEvent" 
+// "NotificationMetadata":"AnsibleDemoAppUpASGEvent" 
   let cmdWeb = 'ansible-playbook ansibleFiles/playbooks/addWebServer.yml';
   let cmdApp = 'ansible-playbook ansibleFiles/playbooks/addAppServer.yml';
   if (adLCMetaData.find('AnsibleDemoWebUpASGEvent')) {
@@ -181,8 +186,13 @@ function getEC2IPAddress(instanceID) {
  * ******************************/
 function inventoryAddInstance (instanceID) {
 
-  let addline = '\\[webservers\\]\\n'+instanceID+' ansible_host='+adEC2Info.PrivateIpAddress+' ansible_user=ec2-user ansible_ssh_private_key_file=\~\/.ssh\/'+adEC2Info.KeyName;
-  let cmd = 'sed -i -e s/\\[webservers\\]'+addLine+'/ ansibleFiles/hosts'
+  if (adLCMetaData.find('AnsibleDemoWebUpASGEvent')) {
+    let addline = '\\[webservers\\]\\n'+instanceID+' ansible_host='+adEC2Info.PrivateIpAddress+' ansible_user=ec2-user ansible_ssh_private_key_file=\~\/.ssh\/'+adEC2Info.KeyName;
+    let cmd = 'sed -i -e s/\\[webservers\\]'+addLine+'/ ansibleFiles/hosts'
+  } else {
+    let addline = '\\[appservers\\]\\n'+instanceID+' ansible_host='+adEC2Info.PrivateIpAddress+' ansible_user=ec2-user ansible_ssh_private_key_file=\~\/.ssh\/'+adEC2Info.KeyName;
+    let cmd = 'sed -i -e s/\\[appservers\\]'+addLine+'/ ansibleFiles/hosts'
+  }
 
   exec(cmd, function(err, data) { cbCallFlow(err, stdout, inventoryAddInstance ); }); 
 }
