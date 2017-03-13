@@ -72,7 +72,7 @@ console.log(adMsgBody);
 // "LifecycleTransition":"autoscaling:EC2_INSTANCE_LAUNCHING" 
 // "LifecycleTransition":"autoscaling:EC2_INSTANCE_TERMINATING" 
           if (adLCTransition  == "autoscaling:EC2_INSTANCE_TERMINATING") {
-            inventoryDeleteInstance()
+            inventoryDeleteInstance(adMsgBody.EC2InstanceId);
           } else {
             if ((adLCMetaData === undefined) || (adLCHookName === undefined)) { 
               deleteMessage();
