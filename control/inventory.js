@@ -94,7 +94,8 @@ console.log(adMsgBody);
 
 // data.Reservations[0].Instances[0].PrivateIpAddress 
 // data.Reservations[0].Instances[0].KeyName 
-        inventoryAddInstance();
+// data.Reservations[0].Instances[0].InstanceId
+        inventoryAddInstance(adEC2Info.InstanceId);
       }
       break;
 
@@ -195,11 +196,11 @@ function inventoryAddInstance (instanceID) {
   let cmd='';
 
   if (adLCMetaData.search('AnsibleDemoWebUpASGEvent') != -1) {
-    addLine= '\\[webservers\\]\\n'+instanceID+' ansible_host='+adEC2Info.PrivateIpAddress+' ansible_user=ec2-user ansible_ssh_private_key_file=\~\/.ssh\/'+adEC2Info.KeyName;
-    cmd = 'sed -i -e "s/\\[webservers\\]/'+addLine+'/" ansibleFiles/hosts'
+    addLine = '"\\[webservers\\]\\n'+instanceID+' ansible_host='+adEC2Info.PrivateIpAddress+' ansible_user=ec2-user ansible_ssh_private_key_file=\\~\\/.ssh\\/'+adEC2Info.KeyName+'.pem"';
+    cmd = 'sed -i -e s/\\\\[webservers\\\\]/'+addLine+'/ ansibleFiles/hosts'
   } else {
-    addLine = '\\[appservers\\]\\n'+instanceID+' ansible_host='+adEC2Info.PrivateIpAddress+' ansible_user=ec2-user ansible_ssh_private_key_file=\~\/.ssh\/'+adEC2Info.KeyName;
-    cmd = 'sed -i -e "s/\\[appservers\\]/'+addLine+'/" ansibleFiles/hosts'
+    addLine = '"\\[appservers\\]\\n'+instanceID+' ansible_host='+adEC2Info.PrivateIpAddress+' ansible_user=ec2-user ansible_ssh_private_key_file=\\~\\/.ssh\\/'+adEC2Info.KeyName+'.pem"';
+    cmd = 'sed -i -e s/\\\\[appservers\\\\]/'+addLine+'/ ansibleFiles/hosts'
   }
 
   exec(cmd, function(err, stdout, stderr) { cbCallFlow(err, stdout, inventoryAddInstance ); }); 
