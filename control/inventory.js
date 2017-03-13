@@ -36,8 +36,8 @@ adCBID[receiveMessage]=1;
 adCBID[deleteMessage]=2;
 adCBID[runPlayBook]=3;
 adCBID[getEC2IPAddress]=4;
-adCBID[inventoryAddInstance ]=5;
-adCBID[inventoryDeleteInstance ]=6;
+adCBID[inventoryAddInstance]=5;
+adCBID[inventoryDeleteInstance]=6;
 adCBID[completeLifecycle]=7;
 
 /* ******************************
@@ -46,7 +46,8 @@ adCBID[completeLifecycle]=7;
 function cbCallFlow(err, data, from) {
 
   // OK - print error 
-  if (err) { console.log("CB from:", from, err, err.stack); } 
+  if (err) { console.log("Error in CB from:", from, err, err.stack); } 
+  console.log("### CB from:", from);
 
   switch (adCBID[from]) {
     case adCBID[receiveMessage]:
@@ -54,10 +55,10 @@ function cbCallFlow(err, data, from) {
         receiveMessage(); 
       } else {
         if (typeof data.Messages === "undefined") { 
-          console.log("CB from:", from, "no data");
+          console.log("CB from receive:", "no data");
           receiveMessage(); 
         } else { 
-          console.log("CB from:", from, "good news, got data");
+          console.log("CB from receive:", "good news, got data");
           let adMsgBody = JSON.parse(data.Messages[0].Body);
           adMsgReceiptHandle = data.Messages[0].ReceiptHandle;
           adASGName = adMsgBody.AutoScalingGroupName;
@@ -66,12 +67,18 @@ function cbCallFlow(err, data, from) {
           adLCTransition = adMsgBody.LifecycleTransition;
           adLCMetaData = adMsgBody.NotificationMetadata;
 
+console.log(adMsgBody);
+
 // "LifecycleTransition":"autoscaling:EC2_INSTANCE_LAUNCHING" 
 // "LifecycleTransition":"autoscaling:EC2_INSTANCE_TERMINATING" 
           if (adLCTransition  == "autoscaling:EC2_INSTANCE_TERMINATING") {
             inventoryDeleteInstance()
           } else {
-            getEC2IPAddress(adMsgBody.EC2InstanceId);
+            if ((adLCMetaData === undefined) || (adLCHookName === undefined)) { 
+              deleteMessage();
+            } else {
+              getEC2IPAddress(adMsgBody.EC2InstanceId);
+            }
           }
         }
       }
@@ -91,12 +98,12 @@ function cbCallFlow(err, data, from) {
       }
       break;
 
-    case adCBID[inventoryDeleteInstance ]:
+    case adCBID[inventoryDeleteInstance]:
         completeLifecycle("CONTINUE");
         deleteMessage();
       break;
 
-    case adCBID[inventoryAddInstance ]:
+    case adCBID[inventoryAddInstance]:
         if (err) {
           completeLifecycle("ABANDON");
           deleteMessage();
@@ -162,10 +169,10 @@ function runPlayBook() {
 // "NotificationMetadata":"AnsibleDemoAppUpASGEvent" 
   let cmdWeb = 'ansible-playbook ansibleFiles/playbooks/addWebServer.yml';
   let cmdApp = 'ansible-playbook ansibleFiles/playbooks/addAppServer.yml';
-  if (adLCMetaData.find('AnsibleDemoWebUpASGEvent')) {
-    exec(cmdWeb, function(err, data) { cbCallFlow(err, stdout, runPlayBook); }); 
+  if (adLCMetaData.search('AnsibleDemoWebUpASGEvent') != -1) {
+    exec(cmdWeb, function(err, stdout, stderr) { cbCallFlow(err, stdout, runPlayBook); }); 
   } else {
-    exec(cmdApp, function(err, data) { cbCallFlow(err, stdout, runPlayBook); }); 
+    exec(cmdApp, function(err, stdout, stderr) { cbCallFlow(err, stdout, runPlayBook); }); 
   }
 }
 
@@ -176,7 +183,6 @@ function runPlayBook() {
 function getEC2IPAddress(instanceID) {
   var params = {
     InstanceIds: [instanceID],
-    MaxResults: 1,
   };
   ec2.describeInstances(params, function(err, data) { cbCallFlow(err, data, getEC2IPAddress); }); 
 }
@@ -185,16 +191,18 @@ function getEC2IPAddress(instanceID) {
  * add an instance to the inventory
  * ******************************/
 function inventoryAddInstance (instanceID) {
+  let addLine='';
+  let cmd='';
 
-  if (adLCMetaData.find('AnsibleDemoWebUpASGEvent')) {
-    let addline = '\\[webservers\\]\\n'+instanceID+' ansible_host='+adEC2Info.PrivateIpAddress+' ansible_user=ec2-user ansible_ssh_private_key_file=\~\/.ssh\/'+adEC2Info.KeyName;
-    let cmd = 'sed -i -e s/\\[webservers\\]'+addLine+'/ ansibleFiles/hosts'
+  if (adLCMetaData.search('AnsibleDemoWebUpASGEvent') != -1) {
+    addLine= '\\[webservers\\]\\n'+instanceID+' ansible_host='+adEC2Info.PrivateIpAddress+' ansible_user=ec2-user ansible_ssh_private_key_file=\~\/.ssh\/'+adEC2Info.KeyName;
+    cmd = 'sed -i -e "s/\\[webservers\\]/'+addLine+'/" ansibleFiles/hosts'
   } else {
-    let addline = '\\[appservers\\]\\n'+instanceID+' ansible_host='+adEC2Info.PrivateIpAddress+' ansible_user=ec2-user ansible_ssh_private_key_file=\~\/.ssh\/'+adEC2Info.KeyName;
-    let cmd = 'sed -i -e s/\\[appservers\\]'+addLine+'/ ansibleFiles/hosts'
+    addLine = '\\[appservers\\]\\n'+instanceID+' ansible_host='+adEC2Info.PrivateIpAddress+' ansible_user=ec2-user ansible_ssh_private_key_file=\~\/.ssh\/'+adEC2Info.KeyName;
+    cmd = 'sed -i -e "s/\\[appservers\\]/'+addLine+'/" ansibleFiles/hosts'
   }
 
-  exec(cmd, function(err, data) { cbCallFlow(err, stdout, inventoryAddInstance ); }); 
+  exec(cmd, function(err, stdout, stderr) { cbCallFlow(err, stdout, inventoryAddInstance ); }); 
 }
 
 /* ******************************
@@ -202,7 +210,7 @@ function inventoryAddInstance (instanceID) {
  * ******************************/
 function inventoryDeleteInstance (instanceID) {
   let cmd = 'sed -i -e /'+instanceID+'/d ansibleFiles/hosts'
-  exec(cmd, function(err, data) { cbCallFlow(err, stdout, inventoryDeleteInstance); }); 
+  exec(cmd, function(err, stdout, stderr) { cbCallFlow(err, stdout, inventoryDeleteInstance); }); 
 }
 
 /* ******************************
@@ -215,6 +223,7 @@ function completeLifecycle(LCHaction) {
     LifecycleActionToken: adLCToken,
     LifecycleActionResult: LCHaction
   };
+  console.log("###", params);
   autoscaling.completeLifecycleAction(params, function(err, data) { cbCallFlow(err, data, completeLifecycle); }); 
 }
 
