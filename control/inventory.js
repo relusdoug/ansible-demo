@@ -168,8 +168,8 @@ function deleteMessage() {
 function runPlayBook() {
 // "NotificationMetadata":"AnsibleDemoWebUpASGEvent" 
 // "NotificationMetadata":"AnsibleDemoAppUpASGEvent" 
-  let cmdWeb = 'ansible-playbook ansibleFiles/playbooks/addWebServer.yml';
-  let cmdApp = 'ansible-playbook ansibleFiles/playbooks/addAppServer.yml';
+  let cmdWeb = 'ansible-playbook -i ansibleFiles/hosts ansibleFiles/playbooks/addWebServer.yml';
+  let cmdApp = 'ansible-playbook -i ansibleFiles/hosts ansibleFiles/playbooks/addAppServer.yml';
   if (adLCMetaData.search('AnsibleDemoWebUpASGEvent') != -1) {
     exec(cmdWeb, function(err, stdout, stderr) { cbCallFlow(err, stdout, runPlayBook); }); 
   } else {
