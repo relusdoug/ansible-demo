@@ -161,7 +161,7 @@
                     {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-public02"}}
                 ],
                 "Cooldown": "300",
-                "HealthCheckGracePeriod": "300",
+                "HealthCheckGracePeriod": "900",
                 "HealthCheckType": "ELB",
                 "LaunchConfigurationName": { "Ref": "WebLC" },
                 "LoadBalancerNames" : [{ "Ref": "WebELB" }],
@@ -177,7 +177,7 @@
             "Type" : "AWS::AutoScaling::LifecycleHook",
             "Properties" : {
                 "AutoScalingGroupName" : { "Ref": "WebASG" },
-                "HeartbeatTimeout": "300",
+                "HeartbeatTimeout": "900",
                 "LifecycleTransition" : "autoscaling:EC2_INSTANCE_LAUNCHING",
                 "NotificationMetadata" : "AnsibleDemoWebUpASGEvent",
                 "NotificationTargetARN" : { "Fn::GetAtt" : ["DemoSQS", "Arn"]},
@@ -188,7 +188,7 @@
             "Type" : "AWS::AutoScaling::LifecycleHook",
             "Properties" : {
                 "AutoScalingGroupName" : { "Ref": "WebASG" },
-                "HeartbeatTimeout": "300",
+                "HeartbeatTimeout": "900",
                 "LifecycleTransition" : "autoscaling:EC2_INSTANCE_TERMINATING",
                 "NotificationMetadata" : "AnsibleDemoWebDownASGEvent",
                 "NotificationTargetARN" : { "Fn::GetAtt" : ["DemoSQS", "Arn"]},
@@ -203,7 +203,7 @@
                     {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-private02"}}
                 ],
                 "Cooldown": "300",
-                "HealthCheckGracePeriod": "300",
+                "HealthCheckGracePeriod": "900",
                 "HealthCheckType": "ELB",
                 "LaunchConfigurationName": { "Ref": "AppLC" },
                 "LoadBalancerNames" : [{ "Ref": "AppELB" }],
@@ -219,7 +219,7 @@
             "Type" : "AWS::AutoScaling::LifecycleHook",
             "Properties" : {
                 "AutoScalingGroupName" : { "Ref": "AppASG" },
-                "HeartbeatTimeout": "300",
+                "HeartbeatTimeout": "900",
                 "LifecycleTransition" : "autoscaling:EC2_INSTANCE_LAUNCHING",
                 "NotificationMetadata" : "AnsibleDemoAppUpASGEvent",
                 "NotificationTargetARN" : { "Fn::GetAtt" : ["DemoSQS", "Arn"]},
@@ -230,7 +230,7 @@
             "Type" : "AWS::AutoScaling::LifecycleHook",
             "Properties" : {
                 "AutoScalingGroupName" : { "Ref": "AppASG" },
-                "HeartbeatTimeout": "300",
+                "HeartbeatTimeout": "900",
                 "LifecycleTransition" : "autoscaling:EC2_INSTANCE_TERMINATING",
                 "NotificationMetadata" : "AnsibleDemoAppDownASGEvent",
                 "NotificationTargetARN" : { "Fn::GetAtt" : ["DemoSQS", "Arn"]},

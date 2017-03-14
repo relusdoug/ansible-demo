@@ -192,17 +192,7 @@ function getEC2IPAddress(instanceID) {
  * add an instance to the inventory
  * ******************************/
 function inventoryAddInstance (instanceID) {
-  let addLine='';
-  let cmd='';
-
-  if (adLCMetaData.search('AnsibleDemoWebUpASGEvent') != -1) {
-    addLine = '"\\[webservers\\]\\n'+instanceID+' ansible_host='+adEC2Info.PrivateIpAddress+' ansible_user=ec2-user ansible_ssh_private_key_file=\\~\\/.ssh\\/'+adEC2Info.KeyName+'.pem"';
-    cmd = 'sed -i -e s/\\\\[webservers\\\\]/'+addLine+'/ ansibleFiles/hosts'
-  } else {
-    addLine = '"\\[appservers\\]\\n'+instanceID+' ansible_host='+adEC2Info.PrivateIpAddress+' ansible_user=ec2-user ansible_ssh_private_key_file=\\~\\/.ssh\\/'+adEC2Info.KeyName+'.pem"';
-    cmd = 'sed -i -e s/\\\\[appservers\\\\]/'+addLine+'/ ansibleFiles/hosts'
-  }
-
+  cmd = './addHost.sh '+instanceID+" "+adEC2Info.PrivateIpAddress+" "+adEC2Info.KeyName+'.pem';
   exec(cmd, function(err, stdout, stderr) { cbCallFlow(err, stdout, inventoryAddInstance ); }); 
 }
 
@@ -210,7 +200,7 @@ function inventoryAddInstance (instanceID) {
  * delete instance from the inventory
  * ******************************/
 function inventoryDeleteInstance (instanceID) {
-  let cmd = 'sed -i -e /'+instanceID+'/d ansibleFiles/hosts'
+  cmd = './delHost.sh '+instanceID;
   exec(cmd, function(err, stdout, stderr) { cbCallFlow(err, stdout, inventoryDeleteInstance); }); 
 }
 
