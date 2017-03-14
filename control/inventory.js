@@ -193,6 +193,12 @@ function getEC2IPAddress(instanceID) {
  * ******************************/
 function inventoryAddInstance (instanceID) {
   cmd = './addHost.sh '+instanceID+" "+adEC2Info.PrivateIpAddress+" "+adEC2Info.KeyName+'.pem';
+  if (adLCMetaData.search('AnsibleDemoWebUpASGEvent') != -1) {
+    cmd = cmd.concat(' webservers');
+  } else {
+    cmd = cmd.concat(' appservers');
+  }
+
   exec(cmd, function(err, stdout, stderr) { cbCallFlow(err, stdout, inventoryAddInstance ); }); 
 }
 
