@@ -134,7 +134,7 @@
         "WebLC": {
             "Type": "AWS::AutoScaling::LaunchConfiguration",
             "Properties": {
-                "AssociatePublicIpAddress": false,
+                "AssociatePublicIpAddress": true,
                 "EbsOptimized": false,
                 "ImageId": "ami-c55673a0",
                 "InstanceType": { "Ref": "InstanceTypeParameters" },
@@ -166,7 +166,7 @@
                 "LaunchConfigurationName": { "Ref": "WebLC" },
                 "LoadBalancerNames" : [{ "Ref": "WebELB" }],
                 "MaxSize" : "10",
-                "MinSize" : "2",
+                "MinSize" : "0",
                 "Tags": [
                     {"Key":"Name", "Value": "Ansible Demo Web ASG", "PropagateAtLaunch": "true" },
                     {"Key":"Team", "Value": "Douglas Yoon", "PropagateAtLaunch": "true" }
@@ -208,7 +208,7 @@
                 "LaunchConfigurationName": { "Ref": "AppLC" },
                 "LoadBalancerNames" : [{ "Ref": "AppELB" }],
                 "MaxSize" : "10",
-                "MinSize" : "2",
+                "MinSize" : "0",
                 "Tags": [ 
                     {"Key":"Name", "Value": "Ansible Demo App ASG", "PropagateAtLaunch": "true" },
                     {"Key":"Team", "Value": "Douglas Yoon", "PropagateAtLaunch": "true" }

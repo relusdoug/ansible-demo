@@ -4,7 +4,18 @@
   become_user: root
   become_method: sudo
   tasks: 
+    - name: give ec2 a change to fully bake
+      delay: 10
+      file:
+        path: /root/app_script.debug
+        state: touch
+
     - name: update system
+      register: task_result
+      until: task_result.rc == 0
+      retries: 6
+      delay: 10
+      ignore_errors: yes
       yum:
         name: '*'
         state: latest
@@ -19,7 +30,4 @@
         name: httpd
         enabled: yes
         state: started
-
-    - name: debug line
-      command: touch /root/app_script.debug
 
