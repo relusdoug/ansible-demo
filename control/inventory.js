@@ -105,6 +105,7 @@ console.log(adMsgBody);
       break;
 
     case adCBID[inventoryAddInstance]:
+console.log("cbInventoryAddInstance", err, data);
         if (err) {
           completeLifecycle("ABANDON");
           deleteMessage();
@@ -114,6 +115,7 @@ console.log(adMsgBody);
       break;
 
     case adCBID[runPlayBook]:
+console.log("cbRunPlayBook", err, data);
       if (err) {
         completeLifecycle("ABANDON");
       } else {
@@ -168,8 +170,8 @@ function deleteMessage() {
 function runPlayBook() {
 // "NotificationMetadata":"AnsibleDemoWebUpASGEvent" 
 // "NotificationMetadata":"AnsibleDemoAppUpASGEvent" 
-  let cmdWeb = 'ansible-playbook -i ansibleFiles/hosts ansibleFiles/playbooks/addWebServer.yml';
-  let cmdApp = 'ansible-playbook -i ansibleFiles/hosts ansibleFiles/playbooks/addAppServer.yml';
+  let cmdWeb = 'cd ansibleFiles; ansible-playbook -i hosts playbooks/addWebServer.yml';
+  let cmdApp = 'cd ansibleFiles; ansible-playbook -i hosts playbooks/addAppServer.yml';
   if (adLCMetaData.search('AnsibleDemoWebUpASGEvent') != -1) {
     exec(cmdWeb, function(err, stdout, stderr) { cbCallFlow(err, stdout, runPlayBook); }); 
   } else {
