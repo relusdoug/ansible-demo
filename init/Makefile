@@ -50,4 +50,4 @@ eventStack:
 
 copyCreds:
 	scp -i ~/.ssh/DY-Ohio.pem ~/.ssh/DY-Ohio.pem ec2-user@`aws cloudformation list-exports | grep -B 1 AnsibleControllerIP | head -n 1 | sed s/[\ ,\:\"'Value']//g`:/home/ec2-user/.ssh/DY-Ohio.pem
-
+	scp -i ~/.ssh/DY-Ohio.pem ~/.ssh/relus-key.pem ec2-user@`aws cloudformation list-exports | grep -B 1 AnsibleControllerIP | head -n 1 | sed s/[\ ,\:\"'Value']//g`:/home/ec2-user/.ssh/id_rsa
