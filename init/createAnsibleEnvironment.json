@@ -138,15 +138,14 @@
         },
         "DYEIP": {
           "Type": "AWS::EC2::EIP",
-          "DepndsOn": { "Ref": "DYIGWAttach" },
           "Properties": {
-            "Domain": { "Ref": "dougCfVpc" }
+            "Domain": "vpc"
           }
         },
         "DYNAT": {
           "Type": "AWS::EC2::NatGateway",
           "Properties": {
-            "AllocationId": { "Ref": "DYEIP" },
+            "AllocationId": { "Fn::GetAtt": [ "DYEIP", "AllocationId" ] },
             "SubnetId": { "Ref": "public01" }
           }
         },
@@ -165,7 +164,7 @@
             "Properties": {
                 "RouteTableId": { "Ref": "DYPrivateRouteTable" },
                 "DestinationCidrBlock": "0.0.0.0/0",
-                "GatewayId": { "Ref": "DYNAT" }
+                "NatGatewayId": { "Ref": "DYNAT" }
             }
         },
         "DYPrivate01Assoc": {
@@ -276,24 +275,21 @@
                             "\n",
                             [
 "#cloud-config",
-"",
-"runcmd:",
-"  - yum -y update",
-"  - /usr/bin/pip install --upgrade pip",
-"  - /usr/local/bin/pip install ansible",
-"  - yum -y install git",
-"  - curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash",
-"  - [ -s '/home/ec2-user/.nvm/nvm.sh' ] && . '/home/ec2-user/.nvm/nvm.sh'  # This loads nvm",
-"  - . ~/.nvm/nvm.sh",
-"  - nvm install 6.9.5",
-"  - cd /home/ec2-user; git clone git@github.com:relusdoug/ansible-demo.git",
+"repo_update: true",
+"repo_upgrade: all",
 "",
 "write_files:",
 "  - encoding: b64",
 "    content: SG9zdCAqCiAgU3RyaWN0SG9zdEtleUNoZWNraW5nIG5vCg==",
 "    owner: ec2-user:ec2-user",
 "    path: /home/ec2-user/.ssh/config",
-"    permissions: '0400'"
+"    permissions: '0400'",
+"",
+"runcmd:",
+"  - yum -y update",
+"  - yum -y install git",
+"  - [ sh, -c, '/usr/bin/pip install --upgrade pip' ]",
+"  - [ sh, -c, '/usr/local/bin/pip install ansible' ]",
                             ]
                         ]
                     }

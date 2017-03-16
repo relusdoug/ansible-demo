@@ -23,6 +23,13 @@ STATEcomplete: STATEuploaded
 		--tags Key=Team,Value='Douglas Yoon' | tee STATEcomplete
 	aws cloudformation wait ${stackOperationState} --stack-name ${stackName}
 	scp -i ~/.ssh/DY-Ohio.pem ~/.ssh/DY-Ohio.pem ec2-user@`aws cloudformation list-exports | grep -B 1 AnsibleControllerIP | head -n 1 | sed s/[\ ,\:\"'Value']//g`:/home/ec2-user/.ssh/DY-Ohio.pem
+	scp -i ~/.ssh/DY-Ohio.pem ~/.ssh/relus-key.pem ec2-user@`aws cloudformation list-exports | grep -B 1 AnsibleControllerIP | head -n 1 | sed s/[\ ,\:\"'Value']//g`:/home/ec2-user/.ssh/id_rsa
+	ssh -i ~/.ssh/DY-Ohio.pem ec2-user@`aws cloudformation list-exports | grep -B 1 AnsibleControllerIP | head -n 1 | sed s/[\ ,\:\"'Value']//g` "curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash"
+	ssh -i ~/.ssh/DY-Ohio.pem ec2-user@`aws cloudformation list-exports | grep -B 1 AnsibleControllerIP | head -n 1 | sed s/[\ ,\:\"'Value']//g` "[ -s '/home/ec2-user/.nvm/nvm.sh' ] && . '/home/ec2-user/.nvm/nvm.sh'"
+	ssh -i ~/.ssh/DY-Ohio.pem ec2-user@`aws cloudformation list-exports | grep -B 1 AnsibleControllerIP | head -n 1 | sed s/[\ ,\:\"'Value']//g` ". ~/.nvm/nvm.sh"
+	ssh -i ~/.ssh/DY-Ohio.pem ec2-user@`aws cloudformation list-exports | grep -B 1 AnsibleControllerIP | head -n 1 | sed s/[\ ,\:\"'Value']//g` "nvm install 6.9.5"
+	ssh -i ~/.ssh/DY-Ohio.pem ec2-user@`aws cloudformation list-exports | grep -B 1 AnsibleControllerIP | head -n 1 | sed s/[\ ,\:\"'Value']//g` "cd /home/ec2-user; git clone git@github.com:relusdoug/ansible-demo.git"
+
 
 STATEuploaded: createAnsibleEnvironment.json STATEenvCheckedOut
 	aws s3 cp createAnsibleEnvironment.json s3://relus-doug
