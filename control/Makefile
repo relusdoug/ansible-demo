@@ -8,8 +8,10 @@ stackJSONFile := "createApplicationEnvironment.json"
 stackExists := $(shell ls STATEcomplete)
 ifeq (STATEcomplete,${stackExists})
 stackOperation := update-stack
+stackOperationState := stack-update-complete
 else
 stackOperation := create-stack
+stackOperationState := stack-create-complete
 endif
 
 # The build rules
@@ -18,6 +20,8 @@ STATEcomplete: STATEuploaded
 	aws cloudformation ${stackOperation} --stack-name ${stackName} \
 		--template-url https://s3.amazonaws.com/relus-doug/createApplicationEnvironment.json \
 		--tags Key=Team,Value='Douglas Yoon' | tee STATEcomplete
+	aws cloudformation wait ${stackOperationState} --stack-name ${stackName}
+	./startLCHHandler.sh &
 
 STATEuploaded: createApplicationEnvironment.json STATEenvCheckedOut
 	aws s3 cp createApplicationEnvironment.json s3://relus-doug
@@ -40,7 +44,3 @@ listEvents:
 statStack:
 	aws cloudformation describe-stack-resources --stack-name ${stackName} 
 
-## need to kick off node.js 
-## to retrieve SQS queue URL, either 
-## aws cloudformation list-exports
-## aws sqs list-queues

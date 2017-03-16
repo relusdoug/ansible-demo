@@ -136,6 +136,66 @@
                 "VpcId": { "Ref": "dougCfVpc" }
             }
         },
+        "DYEIP": {
+          "Type": "AWS::EC2::EIP",
+          "DepndsOn": { "Ref": "DYIGWAttach" },
+          "Properties": {
+            "Domain": { "Ref": "dougCfVpc" }
+          }
+        },
+        "DYNAT": {
+          "Type": "AWS::EC2::NatGateway",
+          "Properties": {
+            "AllocationId": { "Ref": "DYEIP" },
+            "SubnetId": { "Ref": "public01" }
+          }
+        },
+        "DYPrivateRouteTable": {
+          "Type": "AWS::EC2::RouteTable",
+          "Properties": {
+            "VpcId": { "Ref": "dougCfVpc" },
+            "Tags": [
+                {"Key":"Name", "Value":"DougPrivateRouteTable"},
+                {"Key":"Team", "Value": "Douglas Yoon"}
+            ]
+          }
+        },
+        "DYPrivateRoute": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": { "Ref": "DYPrivateRouteTable" },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": { "Ref": "DYNAT" }
+            }
+        },
+        "DYPrivate01Assoc": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": { "Ref": "DYPrivateRouteTable" },
+                "SubnetId": { "Ref": "private01" }
+            }
+        },
+        "DYPrivate02Assoc": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": { "Ref": "DYPrivateRouteTable" },
+                "SubnetId": { "Ref": "private02" }
+            }
+        },
+        "DYData01Assoc": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": { "Ref": "DYPrivateRouteTable" },
+                "SubnetId": { "Ref": "data01" }
+            }
+        },
+        "DYData02Assoc": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": { "Ref": "DYPrivateRouteTable" },
+                "SubnetId": { "Ref": "data02" }
+            }
+        },
         "DYPublicRouteTable": {
           "Type": "AWS::EC2::RouteTable",
           "Properties": {
@@ -218,18 +278,22 @@
 "#cloud-config",
 "",
 "runcmd:",
-'  - sudo yum -y update',
-'  - sudo /usr/bin/pip install --upgrade pip',
-'  - sudo /usr/local/bin/pip install ansible',
-'  - sudo yum -y install git',
-'  - sudo curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash',
-'  - sudo export NVM_DIR="/home/ec2-user/.nvm"',
-'  - sudo [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm',
-'  - sudo . ~/.nvm/nvm.sh',
-'  - sudo nvm install 6.9.5',
+"  - yum -y update",
+"  - /usr/bin/pip install --upgrade pip",
+"  - /usr/local/bin/pip install ansible",
+"  - yum -y install git",
+"  - curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash",
+"  - [ -s '/home/ec2-user/.nvm/nvm.sh' ] && . '/home/ec2-user/.nvm/nvm.sh'  # This loads nvm",
+"  - . ~/.nvm/nvm.sh",
+"  - nvm install 6.9.5",
+"  - cd /home/ec2-user; git clone git@github.com:relusdoug/ansible-demo.git",
 "",
-"ssh_authorized_keys:",
-"  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDOEviVpJVWyVyzD1JV/1IE6NVeu1kWp4s9AaVKCQwWFDRh8zZXR06QUZu9VfwlC+EU8MM7ggZhfrYPMlaO4e9D/5Qx8FrPoLcxOMgyVi0uTDIkIwZZkoPHDclmseQgj/9by+ns9kRoT8P2Ne+JjQd8hLK0n3zXmDj6rPXZgdPvi0eFST+PUApF1Q/A4d+H6Ho1555AskKfvsXLwVr3XM5Y0B5N6AMYWFxrKWygK+AG4mIaEp2WHb9CsLQOKEGblpXuv+yPfisR94gDy5mJ+Xp0eEvMuO0aODGqpPnqAbJ0+PkLDS/pXoq/d6OSTKc74GXPCynVukxAg0FITAVE8ECh dougyoon@localhost"
+"write_files:",
+"  - encoding: b64",
+"    content: SG9zdCAqCiAgU3RyaWN0SG9zdEtleUNoZWNraW5nIG5vCg==",
+"    owner: ec2-user:ec2-user",
+"    path: /home/ec2-user/.ssh/config",
+"    permissions: '0400'"
                             ]
                         ]
                     }

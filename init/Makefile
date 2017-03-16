@@ -8,8 +8,10 @@ stackJSONFile := "createAnsibleEnvironment.json"
 stackExists := $(shell ls STATEcomplete)
 ifeq (STATEcomplete,${stackExists})
 stackOperation := update-stack
+stackOperationState := stack-update-complete
 else
 stackOperation := create-stack
+stackOperationState := stack-create-complete
 endif
 
 # The build rules
@@ -19,6 +21,8 @@ STATEcomplete: STATEuploaded
 		--template-url https://s3.amazonaws.com/relus-doug/createAnsibleEnvironment.json \
     --capabilities CAPABILITY_NAMED_IAM \
 		--tags Key=Team,Value='Douglas Yoon' | tee STATEcomplete
+	aws cloudformation wait ${stackOperationState} --stack-name ${stackName}
+	scp -i ~/.ssh/DY-Ohio.pem ~/.ssh/DY-Ohio.pem ec2-user@`aws cloudformation list-exports | grep -B 1 AnsibleControllerIP | head -n 1 | sed s/[\ ,\:\"'Value']//g`:/home/ec2-user/.ssh/DY-Ohio.pem
 
 STATEuploaded: createAnsibleEnvironment.json STATEenvCheckedOut
 	aws s3 cp createAnsibleEnvironment.json s3://relus-doug
@@ -43,3 +47,7 @@ statStack:
 
 eventStack:
 	aws cloudformation describe-stack-events --stack-name ${stackName} 
+
+copyCreds:
+	scp -i ~/.ssh/DY-Ohio.pem ~/.ssh/DY-Ohio.pem ec2-user@`aws cloudformation list-exports | grep -B 1 AnsibleControllerIP | head -n 1 | sed s/[\ ,\:\"'Value']//g`:/home/ec2-user/.ssh/DY-Ohio.pem
+
