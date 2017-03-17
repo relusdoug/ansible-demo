@@ -278,18 +278,11 @@
 "repo_update: true",
 "repo_upgrade: all",
 "",
-"write_files:",
-"  - encoding: b64",
-"    content: SG9zdCAqCiAgU3RyaWN0SG9zdEtleUNoZWNraW5nIG5vCg==",
-"    owner: ec2-user:ec2-user",
-"    path: /home/ec2-user/.ssh/config",
-"    permissions: '0400'",
-"",
 "runcmd:",
-"  - yum -y update",
-"  - yum -y install git",
-"  - [ sh, -c, '/usr/bin/pip install --upgrade pip' ]",
-"  - [ sh, -c, '/usr/local/bin/pip install ansible' ]",
+" - yum -y update",
+" - yum -y install git",
+" - [ sh, -c, '/usr/bin/pip install --upgrade pip' ]",
+" - [ sh, -c, '/usr/local/bin/pip install ansible' ]"
                             ]
                         ]
                     }
