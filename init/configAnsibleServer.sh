@@ -17,4 +17,7 @@ ssh -i ~/.ssh/DY-Ohio.pem ec2-user@$ansibleIP "[ -s '/home/ec2-user/.nvm/nvm.sh'
 ssh -i ~/.ssh/DY-Ohio.pem ec2-user@$ansibleIP ". ~/.nvm/nvm.sh"
 ssh -i ~/.ssh/DY-Ohio.pem ec2-user@$ansibleIP "nvm install 6.9.5"
 ssh -i ~/.ssh/DY-Ohio.pem ec2-user@$ansibleIP "cd /home/ec2-user; git clone git@github.com:relusdoug/ansible-demo.git"
+ssh -i ~/.ssh/DY-Ohio.pem ec2-user@$ansibleIP "npm install aws-sdk"
+ssh -i ~/.ssh/DY-Ohio.pem ec2-user@$ansibleIP "ln -s /home/ec2-user/node_modules /home/ec2-user/ansible-demo/control"
+ssh -i ~/.ssh/DY-Ohio.pem ec2-user@$ansibleIP "echo 'W2RlZmF1bHRdCnJlZ2lvbiA9IHVzLWVhc3QtMgo=' | base64 -d > ~/.aws/config"
 
