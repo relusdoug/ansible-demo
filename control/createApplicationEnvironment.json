@@ -91,6 +91,7 @@
                     {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-public01"}}, 
                     {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-public02"}}
                 ],
+                "SecurityGroups": [{ "Ref": "DYDemoAppELBSecurityGroup" }],
                 "CrossZone" : "true",
                 "LoadBalancerName" : "AnsibleDemoWebELB",
                 "Listeners" : [ { "InstancePort": "80", "InstanceProtocol": "HTTP", "LoadBalancerPort": "80", "Protocol": "HTTP" }],
@@ -107,11 +108,26 @@
                     {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-private01"}}, 
                     {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-private02"}}
                 ],
+                "SecurityGroups": [{ "Ref": "DYDemoAppELBSecurityGroup" }],
                 "CrossZone" : "true",
                 "LoadBalancerName" : "AnsibleDemoAppELB",
                 "Listeners" : [ { "InstancePort": "80", "InstanceProtocol": "HTTP", "LoadBalancerPort": "80", "Protocol": "HTTP" }],
                 "Tags": [
                     {"Key":"Name", "Value": "AnsibleDemoAppELB"},
+                    {"Key":"Team", "Value": "Douglas Yoon"}
+                ]
+            }
+        },
+        "DYDemoAppELBSecurityGroup": {
+            "Type":"AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Doug CF SG for ELB",
+                "SecurityGroupIngress": [
+                    {"IpProtocol": "tcp", "FromPort": "80", "ToPort": "80", "CidrIp": "0.0.0.0/0"}
+                ],
+                "VpcId": {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-vpc"}}, 
+                "Tags": [
+                    {"Key":"Name", "Value": "DougELBHTTPOnly"},
                     {"Key":"Team", "Value": "Douglas Yoon"}
                 ]
             }
