@@ -105,8 +105,8 @@
             "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
             "Properties": {
                 "Subnets" : [ 
-                    {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-private01"}}, 
-                    {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-private02"}}
+                    {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-public01"}}, 
+                    {"Fn::ImportValue" : {"Fn::Sub" : "${initStackName}-public02"}}
                 ],
                 "SecurityGroups": [{ "Ref": "DYDemoAppELBSecurityGroup" }],
                 "CrossZone" : "true",
