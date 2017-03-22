@@ -31,7 +31,7 @@
         enabled: yes
         state: started
 
-    - name copy html file over
+    - name: copy html file over
       copy:
         src: ../../../app/index.html
         dest: /var/www/html/index.html
@@ -39,6 +39,5 @@
         group: apache
         mode: 0644
 
-    - name customize the html file
-      command: hn=`hostname`;sed -i -e s/HOSTNAME/$hn/ index.html
-      chdir /var/www/html/
+    - name: customize the html file
+      command: hn=`hostname`;sed -i -e s/HOSTNAME/$hn/ /var/www/html/index.html
