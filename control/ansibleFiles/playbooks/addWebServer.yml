@@ -40,4 +40,20 @@
         mode: 0644
 
     - name: customize the html file
-      command: hn=`hostname`;sed -i -e s/HOSTNAME/$hn/ /var/www/html/index.html
+      shell: sed -i -e s/HOSTNAME/`hostname`/ /var/www/html/index.html
+      become: true
+      become_user: root
+
+    - name: html file customized using Jinja
+      template: 
+        src: ../../../app/templateExample.j2
+        dest: /var/www/html/servers.html
+        owner: apache
+        group: apache
+        mode: 0644
+
+    - name: copy another html file 
+      copy: src=../../../app/other.html dest=/var/www/html/other.html mode=0644 owner=apache group=apache
+
+    - name: customize above html file using lineinfile
+      lineinfile: dest=/var/www/html/other.html regexp=HOSTNAME line="File was modified by lineinfile with no real reason"
